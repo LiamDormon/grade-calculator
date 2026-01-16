@@ -1,0 +1,102 @@
+/* Neobrutalism helpers and palette tweaks */
+:root{
+  --accent:#A985FF; /* purple accent for primary actions */
+  --accent-2:#ffd066; /* secondary accent */
+  --border:#2b2b2b; /* heavy border for neobrutalism */
+  --bg:#f6f2ee; /* warm off-white background */
+  --card-bg:#fff; /* card surface */
+  --muted:#6b7280;
+  --shadow: 6px 6px 0px 0px rgba(0,0,0,0.12);
+}
+
+/* Card surface matching generated shadcn card, but stronger border/shadow */
+.neobrutal-card{
+  background: var(--card-bg);
+  border: 3px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  border-radius: 6px;
+}
+
+/* small badges used for validation & summaries */
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:6px;
+  border:2px solid var(--border);
+  background: var(--card-bg);
+  font-weight:600;
+  font-size:0.85rem;
+}
+.badge.ok{ color: #064e3b; border-color:#064e3b }
+.badge.warn{ color: #991b1b; border-color:#991b1b }
+
+/* neobrutal button default override (for non-shadcn components)
+   Prefer using the generated Button component instead */
+.neobrutal-button{
+  background: var(--accent);
+  border: 3px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+}
+
+/* small input helpers */
+.neobrutal-input{
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+.text-muted{ color: var(--muted) }
+.warn { color: #b91c1c; font-weight: 600 }
+.ok { color: #0f766e; font-weight: 600 }
+
+/* compact assignment row visuals */
+.assignment-row{ padding:6px 0; border-top:1px solid rgba(0,0,0,0.04); }
+.assignment-row:first-child{ border-top:0 }
+.assignment-header{ padding-bottom:4px; margin-bottom:0; border-bottom:1px solid rgba(0,0,0,0.03) }
+
+/* target chips shown under assignments when desired grade is set */
+.target-chip{ display:inline-block; padding:4px 8px; border-radius:6px; border:2px solid var(--border); font-weight:700; background:var(--card-bg); font-size:0.85rem }
+.target-chip.ok{ color:var(--accent-2); border-color:var(--accent-2) }
+.target-chip.warn{ color:#b91c1c; border-color:#b91c1c }
+
+/* compact inline target label: smaller, subtler, tooltip holds the 'solo' value */
+.target-inline{ display:inline-flex; align-items:center; gap:6px; padding:4px 6px; border-radius:6px; border:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.6); font-weight:700; font-size:0.9rem }
+.target-inline.warn{ color:#b91c1c; border-color:#f5d0d0; background: rgba(255, 235, 238, 0.9); }
+.target-inline.ok{ color:var(--accent-2); border-color: rgba(255, 208, 100, 0.6); background: rgba(255, 250, 230, 0.9); }
+.target-inline span[aria-hidden]{ font-size:0.9rem; opacity:0.9 }
+
+/* score input with inline suffix */
+.score-with-suffix{ position:relative; }
+.score-with-suffix .score-suffix{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:0.82rem; color:var(--muted); background:transparent; padding:0 4px; border-radius:4px; pointer-events:auto }
+.score-with-suffix .score-suffix strong{ font-weight:700 }
+.score-with-suffix .score-suffix.warn{ color:#b91c1c }
+@media (max-width:640px){
+  /* collapse suffix under input on narrow screens */
+  .score-with-suffix .score-suffix{ position:static; display:inline-block; margin-top:6px }
+}
+
+
+
+/* coverage progress bar (single) */
+.progress{ height:14px; background:#f3f2f0; border:2px solid var(--border); border-radius:999px; overflow:hidden }
+.progress > .bar{ height:100%; background:var(--accent); width:0%; transition:width .25s ease }
+.progress-label{ font-weight:700; font-size:0.9rem }
+
+/* multi-segment progress */
+.multi-progress { height:18px; border-radius:999px; overflow:hidden }
+.multi-progress .segment { height:100%; transition: all .2s ease; }
+.multi-progress .segment + .segment { box-shadow: -6px 0 0 0 rgba(0,0,0,0.03) inset }
+
+/* module header spacing and hierarchy */
+.module-header { padding-top:12px; padding-bottom:8px }
+.module-title { font-size:1.05rem; font-weight:800 }
+.module-meta { color:var(--muted); font-size:0.9rem }
+
+/* Reduce visual clutter for buttons */
+button[data-slot="button"], .neobrutal-button { box-shadow: 4px 4px 0px rgba(0,0,0,0.12); }
+button[size="sm"] { padding:6px 8px; }
+
