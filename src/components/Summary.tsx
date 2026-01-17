@@ -18,22 +18,21 @@ export default function Summary() {
     return "Fail"
   }
 
-  const desired = useGradeStore((s) => s.desiredGrade)
   const setDesired = useGradeStore((s) => s.setDesiredGrade)
 
   return (
     <Card>
       <CardHeader>
-        <div className="font-heading">Final grade</div>
+        <div className="font-heading text-lg">Final grade</div>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-heading mb-1">{final ?? "—"}</div>
-        <div className="text-sm text-muted mb-2">Classification: <strong>{classify(final)}</strong></div>
+        <div className="text-4xl font-heading mb-1">{final ?? "—"}</div>
+        <div className="text-sm text-muted-foreground mb-4">Classification: <strong>{classify(final)}</strong></div>
 
-        <div className="mb-4">
-          <div className="text-sm text-muted mb-1">Desired final grade</div>
+        <div className="mb-4 space-y-2">
+          <div className="text-sm text-muted-foreground font-semibold">Desired final grade</div>
           <Select onValueChange={(v) => setDesired(v ? Number(v) : undefined)}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select target" />
             </SelectTrigger>
             <SelectContent>
@@ -44,10 +43,6 @@ export default function Summary() {
             </SelectContent>
           </Select>
         </div>
-
-        {desired !== undefined && (
-          <div className="text-sm text-muted mb-2">Targets are shown inside each module for incomplete assignments.</div>
-        )}
 
         {anyInvalidModule && <div className="warn mb-1">Some modules have assignment weights that do not sum to 100%</div>}
         {Math.abs(totalYearWeight - 1) > 0.001 && <div className="warn">Year weights do not sum to 1. They will be normalized when computing final grade.</div>}

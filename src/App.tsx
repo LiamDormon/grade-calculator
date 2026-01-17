@@ -1,53 +1,78 @@
-import "./App.css"
 import YearTabs from "./components/YearTabs"
 import YearView from "./components/YearView"
 import Summary from "./components/Summary"
-import { Card, CardHeader, CardContent } from "./components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card"
+import { Github } from "lucide-react"
+import { Button } from "./components/ui/button"
 
 function App() {
   return (
-    <div className="min-h-screen p-6 bg-background text-foreground">
-      <header className="mb-6">
-        <Card className="mb-6">
-          <CardHeader className="flex items-center justify-center gap-4">
-            <div>
-              <div className="text-3xl font-extrabold">University Grade Calculator</div>
-              <div className="text-sm text-muted">Define years, modules and assignments. Assignments per module must sum to 100%.</div>
-            </div>
-          </CardHeader>
-        </Card>
-      </header>
+    <div className="min-h-screen text-foreground font-base selection:bg-main selection:text-main-foreground p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b-4 border-border pb-6 bg-white p-6 rounded-base shadow-shadow border-2">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-heading uppercase tracking-black">University Grade Calculator</h1>
+            <p className="text-muted-foreground font-medium mt-1">Track your modules, assignments, and target grades.</p>
+          </div>
+          <div className="flex gap-2">
+            <a href="https://github.com" target="_blank" rel="noreferrer">
+              <Button size="icon" variant="noShadow">
+                <Github className="w-5 h-5" />
+                <span className="sr-only">GitHub</span>
+              </Button>
+            </a>
+          </div>
+        </header>
 
-      <main className="grid grid-cols-3 gap-6">
-        <section className="col-span-2">
-          <Card>
-            <CardHeader>
-              <YearTabs />
-            </CardHeader>
-            <CardContent>
-              <YearView />
-            </CardContent>
-          </Card>
-        </section>
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Main Grade Area */}
+          <section className="lg:col-span-2 space-y-6">
+             <YearTabs />
+             <YearView />
+          </section>
 
-        <aside className="space-y-4">
-          <Summary />
-          <Card>
-            <CardHeader>
-              <div className="font-heading">Legend</div>
-            </CardHeader>
-            <CardContent>
-              <ul className="text-sm">
-                <li>First: 70+ (strong performance)</li>
-                <li>2:1: 60-69</li>
-                <li>2:2: 50-59</li>
-                <li>Third: 40-49</li>
-                <li>Fail: &lt;40</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </aside>
-      </main>
+          {/* Sidebar Summary */}
+          <aside className="lg:col-span-1 lg:sticky lg:top-8 space-y-6">
+            <Summary />
+            
+            <Card className="border-2 border-border shadow-shadow">
+              <CardHeader className="pb-2">
+                <CardTitle>Grade Legend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-2 text-sm font-medium">
+                  <div className="flex items-center justify-between p-2 border-2 border-border bg-white rounded-base">
+                    <span className="font-bold">First</span>
+                    <span className="font-black text-chart-2">70+</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border-2 border-border bg-white rounded-base">
+                    <span className="font-bold">2:1</span>
+                    <span className="font-black text-chart-5">60-69</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border-2 border-border bg-white rounded-base">
+                    <span className="font-bold">2:2</span>
+                    <span className="font-black text-chart-3">50-59</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border-2 border-border bg-white rounded-base">
+                    <span className="font-bold">Third</span>
+                    <span className="font-black text-chart-4">40-49</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border-2 border-border bg-white rounded-base">
+                    <span className="font-bold">Fail</span>
+                    <span className="font-black text-muted-foreground">&lt;40</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+        </main>
+        
+        <footer className="text-center text-sm font-bold text-muted-foreground pt-12 pb-4">
+          <p>Grades are stored locally in your browser.</p>
+        </footer>
+      </div>
     </div>
   )
 }

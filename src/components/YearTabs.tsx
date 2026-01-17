@@ -27,33 +27,35 @@ export default function YearTabs() {
   }
 
   return (
-    <div className="p-4 border-b mb-4">
-      <Tabs defaultValue={activeYearId ?? (years[0]?.id ?? "") } onValueChange={(v) => setActiveYear(v)}>
-        <TabsList>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+      <Tabs defaultValue={activeYearId ?? (years[0]?.id ?? "") } onValueChange={(v) => setActiveYear(v)} className="w-full sm:w-auto">
+        <TabsList className="w-full sm:w-auto h-auto p-1 bg-transparent gap-2">
           {years.map((y) => (
-            <TabsTrigger key={y.id} value={y.id}>{y.name}</TabsTrigger>
+            <TabsTrigger key={y.id} value={y.id} className="flex-1 sm:flex-none data-[state=active]:bg-main data-[state=active]:text-main-foreground border-2 border-transparent data-[state=active]:border-border data-[state=active]:shadow-shadow transition-all">{y.name}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
 
-      <div className="ml-auto mt-3">
+      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
         {showForm ? (
-          <form onSubmit={submit} className="flex gap-2 items-center">
-            <label className="block">
-              <div className="text-xs text-muted mb-1">Year name</div>
-              <Input placeholder="Year name" value={name} onChange={(e) => setName(e.target.value)} />
-            </label>
-            <label className="block">
-              <div className="text-xs text-muted mb-1">Weight (0..1)</div>
-              <Input className="w-20" type="number" step="0.01" min={0} max={1} value={String(weight)} onChange={(e) => setWeight(Number(e.target.value))} />
-            </label>
-            <Button type="submit">Add</Button>
-            <Button variant="neutral" onClick={() => setShowForm(false)}>Cancel</Button>
+          <form onSubmit={submit} className="flex gap-2 items-center bg-card p-1 rounded-base border-2 border-border shadow-sm">
+            <label className="block sr-only">Year name</label>
+            <Input placeholder="Year name" value={name} onChange={(e) => setName(e.target.value)} className="h-9 w-32" />
+            <label className="block sr-only">Weight</label>
+            <Input className="h-9 w-20" type="number" step="0.01" min={0} max={1} value={String(weight)} onChange={(e) => setWeight(Number(e.target.value))} />
+            <Button type="submit" size="sm">Add</Button>
+            <Button type="button" size="sm" variant="neutral" onClick={() => setShowForm(false)}>✕</Button>
           </form>
         ) : (
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowForm(true)}>Add Year</Button>
-            <Button size="icon" variant="reverse" onClick={() => { if (activeYearId) removeYear(activeYearId) }} title="Remove active year" aria-label="Remove active year"><Trash2 /></Button>
+            <Button variant="neutral" onClick={() => setShowForm(true)} size="sm">
+              + Add Year
+            </Button>
+            {activeYearId && (
+              <Button size="icon" variant="neutral" className="h-9 w-9 bg-chart-4" onClick={() => removeYear(activeYearId)} title="Remove active year">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         )}
       </div>
