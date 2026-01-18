@@ -16,6 +16,7 @@ export default function ModuleCard({ yearId, module }: { yearId: string; module:
 
   const [aName, setAName] = useState("")
   const [aWeight, setAWeight] = useState(0)
+  const [aScore, setAScore] = useState<number | undefined>(undefined)
   const [isEditingHeader, setIsEditingHeader] = useState(false)
 
   const getModuleSegments = useGradeStore((s) => s.getModuleSegments)
@@ -26,9 +27,10 @@ export default function ModuleCard({ yearId, module }: { yearId: string; module:
   const add = (e?: React.FormEvent) => {
     e?.preventDefault()
     if (!aName) return
-    addAssignment(yearId, module.id, { name: aName, weight: aWeight })
+    addAssignment(yearId, module.id, { name: aName, weight: aWeight, score: aScore })
     setAName("")
     setAWeight(0)
+    setAScore(undefined)
   }
 
   return (
@@ -116,27 +118,39 @@ export default function ModuleCard({ yearId, module }: { yearId: string; module:
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2 border-t-2 border-border/10 pt-4 mt-2">
-        <form onSubmit={add} className="grid grid-cols-[2.5rem_1fr_4.5rem_9rem_2rem] gap-2 items-center w-full">
-            <div className="flex justify-center">
-                <Plus className="w-4 h-4 text-muted-foreground" />
-            </div>
+        <form onSubmit={add} className="grid grid-cols-[1fr_1fr_auto] md:grid-cols-[2.5rem_1fr_4.5rem_9rem_5rem] gap-2 items-end w-full">
             <Input 
-                className="h-8 text-sm bg-secondary-background border-dashed hover:border-solid hover:border-border transition-colors" 
+                className="h-8 text-sm bg-secondary-background border-dashed hover:border-solid hover:border-border transition-colors order-1 col-span-3 md:col-span-2 md:order-none" 
                 placeholder="New assignment" 
                 value={aName} 
                 onChange={(e) => setAName(e.target.value)} 
             />
-            <Input 
-                className="h-8 text-sm bg-secondary-background border-dashed hover:border-solid hover:border-border transition-colors" 
-                type="number" 
-                placeholder="%"
-                value={String(aWeight)} 
-                onChange={(e) => setAWeight(parseFloat(e.target.value))} 
-            />
-             <div className="h-8 flex items-center justify-start pl-2 text-xs text-muted-foreground w-20">
-               —
-             </div>
-            <Button type="submit" size="icon" className="h-8 w-8 p-0" variant="default" title="Add assignment"> <Plus className="w-4 h-4" /> </Button>
+            
+            <div className="flex flex-col order-3 md:order-none">
+                <label className="text-[10px] text-foreground/50 ml-1 mb-1">Weight %</label>
+                <Input 
+                    className="h-8 text-sm bg-secondary-background border-dashed hover:border-solid hover:border-border transition-colors w-full" 
+                    type="number" 
+                    placeholder="Weight %"
+                    value={String(aWeight)} 
+                    onChange={(e) => setAWeight(parseFloat(e.target.value))} 
+                />
+            </div>
+
+            <div className="flex flex-col order-4 md:order-none">
+                <label className="text-[10px] text-foreground/50 ml-1 mb-1">Score</label>
+                <Input 
+                    className="h-8 text-sm bg-secondary-background border-dashed hover:border-solid hover:border-border transition-colors w-full" 
+                    type="number" 
+                    placeholder="Score (Opt)"
+                    value={aScore ?? ""} 
+                    onChange={(e) => setAScore(e.target.value === "" ? undefined : parseFloat(e.target.value))} 
+                />
+            </div>
+
+            <div className="flex justify-end h-8 items-center order-5 md:order-none">
+                <Button type="submit" size="icon" className="h-8 w-8 p-0" variant="default" title="Add assignment"> <Plus className="w-4 h-4" /> </Button>
+            </div>
         </form>
 
         {!isValid(yearId, module.id) && (
