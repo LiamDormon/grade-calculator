@@ -29,9 +29,9 @@ export default function YearTabs() {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
       <Tabs defaultValue={activeYearId ?? (years[0]?.id ?? "") } onValueChange={(v) => setActiveYear(v)} className="w-full sm:w-auto">
-        <TabsList className="w-full sm:w-auto h-auto p-1 bg-transparent gap-2">
+        <TabsList>
           {years.map((y) => (
-            <TabsTrigger key={y.id} value={y.id} className="flex-1 sm:flex-none data-[state=active]:bg-main data-[state=active]:text-main-foreground border-2 border-transparent data-[state=active]:border-border data-[state=active]:shadow-shadow transition-all">{y.name}</TabsTrigger>
+            <TabsTrigger key={y.id} value={y.id}>{y.name}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>

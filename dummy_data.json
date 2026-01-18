@@ -1,0 +1,133 @@
+{
+  "years": [
+    {
+      "id": "year-1",
+      "name": "Year 1",
+      "weight": 0.1,
+      "modules": [
+        {
+          "id": "mod-101",
+          "code": "CS101",
+          "name": "Intro to Programming",
+          "credits": 20,
+          "assignments": [
+            { "id": "a-101-1", "name": "Lab 1", "weight": 10, "score": 95, "done": true },
+            { "id": "a-101-2", "name": "Lab 2", "weight": 10, "score": 88, "done": true },
+            { "id": "a-101-3", "name": "Midterm", "weight": 30, "score": 75, "done": true },
+            { "id": "a-101-4", "name": "Final Exam", "weight": 50, "score": 82, "done": true }
+          ]
+        },
+        {
+          "id": "mod-102",
+          "code": "MA100",
+          "name": "Mathematics I",
+          "credits": 20,
+          "assignments": [
+            { "id": "a-102-1", "name": "Coursework", "weight": 40, "score": 65, "done": true },
+            { "id": "a-102-2", "name": "Exam", "weight": 60, "score": 58, "done": true }
+          ]
+        },
+        {
+            "id": "mod-103",
+            "code": "CS120",
+            "name": "Web Technologies",
+            "credits": 20,
+            "assignments": [
+                { "id": "a-103-1", "name": "Static Site", "weight": 50, "score": 92, "done": true },
+                { "id": "a-103-2", "name": "JS App", "weight": 50, "score": 85, "done": true }
+            ]
+        }
+      ]
+    },
+    {
+      "id": "year-2",
+      "name": "Year 2",
+      "weight": 0.3,
+      "modules": [
+        {
+          "id": "mod-201",
+          "code": "CS205",
+          "name": "Software Engineering",
+          "credits": 20,
+          "assignments": [
+            {
+              "id": "a-201-1",
+              "name": "Group Project",
+              "weight": 100,
+              "score": 72.5,
+              "done": true,
+              "subTasks": [
+                { "id": "st-1", "name": "Plan", "weight": 20, "score": 80, "done": true },
+                { "id": "st-2", "name": "Implementation", "weight": 50, "score": 75, "done": true },
+                { "id": "st-3", "name": "Presentation", "weight": 30, "score": 65, "done": true }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mod-202",
+          "code": "CS210",
+          "name": "Algorithms",
+          "credits": 20,
+          "assignments": [
+             { "id": "a-202-1", "name": "Coursework 1", "weight": 20, "score": 90, "done": true },
+             { "id": "a-202-2", "name": "Coursework 2", "weight": 20, "score": 40, "done": true },
+             { "id": "a-202-3", "name": "Final Exam", "weight": 60, "score": 68, "done": true }
+          ]
+        },
+        {
+            "id": "mod-203",
+            "code": "CS230",
+            "name": "Databases",
+            "credits": 20,
+            "assignments": [
+                { "id": "a-203-1", "name": "SQL Lab", "weight": 30, "score": 100, "done": true },
+                { "id": "a-203-2", "name": "Design Project", "weight": 70, "score": 62, "done": true }
+            ]
+        }
+      ]
+    },
+    {
+      "id": "year-3",
+      "name": "Year 3",
+      "weight": 0.6,
+      "modules": [
+        {
+          "id": "mod-301",
+          "code": "CS301",
+          "name": "Dissertation",
+          "credits": 40,
+          "assignments": [
+            { "id": "a-301-1", "name": "Interim Report", "weight": 10, "score": 70, "done": true },
+            { "id": "a-301-2", "name": "Final Thesis", "weight": 90, "done": false }
+          ]
+        },
+        {
+          "id": "mod-302",
+          "code": "CS320",
+          "name": "Machine Learning",
+          "credits": 20,
+          "assignments": [
+             { "id": "a-302-1", "name": "Assignment 1", "weight": 50, "score": 85, "done": true },
+             { "id": "a-302-2", "name": "Assignment 2", "weight": 50, "done": false }
+          ]
+        },
+        {
+          "id": "mod-303",
+          "code": "CS350",
+          "name": "Computer Graphics",
+          "credits": 20,
+          "assignments": [
+            { "id": "a-303-1", "name": "Renderer", "weight": 100, "done": false, "subTasks": [
+                { "id": "st-303-1", "name": "Geometry Loader", "weight": 30, "score": 100, "done": true },
+                { "id": "st-303-2", "name": "Lighting Engine", "weight": 40, "done": false },
+                { "id": "st-303-3", "name": "Shadow Mapping", "weight": 30, "done": false }
+            ]}
+          ]
+        }
+      ]
+    }
+  ],
+  "activeYearId": "year-3",
+  "desiredGrade": 70
+}

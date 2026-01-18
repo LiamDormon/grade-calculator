@@ -152,6 +152,9 @@ export type Actions = {
   setDesiredGrade: (grade?: number) => void
   getRequiredModuleScoreForFinal: (yearId: string, moduleId: string, desired: number) => number | undefined
   getRequiredPerAssignmentForModule: (yearId: string, moduleId: string, desired: number) => Array<{ assignmentId: string; required: number; soloRequired: number; feasible: boolean }>
+
+  // import/export
+  importState: (data: GradeSnapshot) => void
 }
 
 type Store = GradeSnapshot & Actions
@@ -534,6 +537,19 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     const normalized = valid.map((y) => ({ avg: y.avg!, weight: y.weight / totalWeight }))
     const final = normalized.reduce((s, y) => s + y.avg * y.weight, 0)
     return Number(final.toFixed(2))
+  },
+
+  importState: (data: GradeSnapshot) => {
+    // Basic validation
+    if (!data || !Array.isArray(data.years)) {
+      alert("Invalid grade data file")
+      return
+    }
+    set(() => ({
+      years: data.years,
+      activeYearId: data.activeYearId,
+      desiredGrade: data.desiredGrade
+    }))
   }
 } as GradeSnapshot & Actions))
 

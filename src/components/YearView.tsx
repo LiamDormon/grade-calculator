@@ -30,6 +30,7 @@ export default function YearView() {
         <div className="flex items-start gap-4">
           <div>
             <h2 className="text-xl font-bold">{year.name}</h2>
+            <div className="text-sm text-muted-foreground">Credits total: <strong>{year.modules.reduce((s, m) => s + m.credits, 0)}</strong></div>
           </div>
 
           <div className="ml-auto flex items-center gap-3">
@@ -37,9 +38,6 @@ export default function YearView() {
               <span>Weight (%)</span>
               <Input className="w-24 bg-secondary-background" type="number" step="0.1" min={0} max={100} value={String(Number((year.weight * 100).toFixed(1)))} onChange={(e) => { const val = Number(e.target.value); if (!Number.isNaN(val)) useGradeStore.getState().updateYear(year.id, { weight: val / 100 }) }} />
             </label>
-
-            <div className="text-sm text-muted-foreground">Credits total: <strong>{year.modules.reduce((s, m) => s + m.credits, 0)}</strong></div>
-
           </div>
         </div>
 
