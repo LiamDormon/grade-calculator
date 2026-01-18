@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import YearTabs from "./components/YearTabs"
 import YearView from "./components/YearView"
 import Summary from "./components/Summary"
