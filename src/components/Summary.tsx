@@ -32,7 +32,7 @@ export default function Summary() {
         <div className="mb-4 space-y-2">
           <div className="text-sm text-muted-foreground font-semibold">Desired final grade</div>
           <Select onValueChange={(v) => setDesired(v ? Number(v) : undefined)}>
-            <SelectTrigger className="w-full bg-white">
+            <SelectTrigger className="w-full bg-secondary-background text-foreground">
               <SelectValue placeholder="Select target" />
             </SelectTrigger>
             <SelectContent>

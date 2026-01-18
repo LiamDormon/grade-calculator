@@ -9,6 +9,7 @@
   --foreground: oklch(0% 0 0);
   --main-foreground: oklch(0% 0 0);
   --main: oklch(70.28% 0.1753 295.36);
+  --destructive: oklch(70.496% 0.18687 22.043);
   --border: oklch(0% 0 0);
   --ring: oklch(0% 0 0);
   --overlay: oklch(0% 0 0 / 0.8);
@@ -19,6 +20,7 @@
   --chart-4: #FF4D50;
   --chart-5: #0099FF;
   --chart-active-dot: #000;
+  --grid-pattern: rgba(0, 0, 0, 0.05);
 }
 
 .dark {
@@ -27,6 +29,7 @@
   --foreground: oklch(92.49% 0 0);
   --main-foreground: oklch(0% 0 0);
   --main: oklch(70.28% 0.1753 295.36);
+  --destructive: oklch(70.496% 0.18687 22.043);
   --border: oklch(0% 0 0);
   --ring: oklch(100% 0 0);
   --shadow: 4px 4px 0px 0px var(--border);
@@ -36,10 +39,12 @@
   --chart-4: #FF6669;
   --chart-5: #008AE5;
   --chart-active-dot: #fff;
+  --grid-pattern: rgba(255, 255, 255, 0.05);
 }
 
 @theme inline {
   --color-main: var(--main);
+  --color-destructive: var(--destructive);
   --color-background: var(--background);
   --color-secondary-background: var(--secondary-background);
   --color-foreground: var(--foreground);
@@ -68,8 +73,8 @@
     @apply text-foreground font-base bg-background;
     background-size: 40px 40px;
     background-image: 
-      linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-pattern) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-pattern) 1px, transparent 1px);
   }
 
   h1, h2, h3, h4, h5, h6{

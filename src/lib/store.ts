@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid"
 import { create } from "zustand"
-import type { Assignment, GradeSnapshot, Module, Year } from "./types"
+import type { Assignment, GradeSnapshot, Module, Year, SubTask } from "./types"
 
 function sum(arr: number[]) {
   return arr.reduce((s, v) => s + v, 0)
@@ -8,6 +8,31 @@ function sum(arr: number[]) {
 
 function clampPercent(n: number) {
   return Math.max(0, Math.min(100, n))
+}
+
+function recalculateAssignment(a: Assignment): Assignment {
+  if (!a.subTasks || a.subTasks.length === 0) return a
+  
+  let weightedScoreSum = 0
+  let allDone = true
+  
+  for (const t of a.subTasks) {
+    if (!t.done) {
+      allDone = false
+    }
+    if (t.score !== undefined) {
+      weightedScoreSum += t.score * t.weight
+    }
+  }
+
+  // Score is sum of (score * weight%). 
+  const newScore = weightedScoreSum / 100
+  
+  return {
+    ...a,
+    score: Number(newScore.toFixed(2)),
+    done: allDone && a.subTasks.length > 0
+  }
 }
 
 export const sample: GradeSnapshot = {
@@ -105,6 +130,11 @@ export type Actions = {
     patch: Partial<Assignment>
   ) => void
   removeAssignment: (yearId: string, moduleId: string, assignmentId: string) => void
+
+  // SubTasks
+  addSubTask: (yearId: string, moduleId: string, assignmentId: string, subTask: Partial<SubTask>) => void
+  updateSubTask: (yearId: string, moduleId: string, assignmentId: string, subTaskId: string, patch: Partial<SubTask>) => void
+  removeSubTask: (yearId: string, moduleId: string, assignmentId: string, subTaskId: string) => void
 
   // validation helpers
   isModuleAssignmentsValid: (yearId: string, moduleId: string) => boolean
@@ -218,6 +248,85 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     }))
   },
 
+  addSubTask: (yearId, moduleId, assignmentId, subTask) => {
+    const id = nanoid()
+    set((state: Store) => ({
+      years: state.years.map((y) =>
+        y.id === yearId
+          ? {
+              ...y,
+              modules: y.modules.map((m) =>
+                m.id === moduleId
+                  ? {
+                      ...m,
+                      assignments: m.assignments.map((a) => {
+                        if (a.id === assignmentId) {
+                          const newSubTasks = [...(a.subTasks || []), { id, name: subTask.name ?? "", weight: clampPercent(subTask.weight ?? 0), score: subTask.score, done: !!subTask.done }]
+                          return recalculateAssignment({ ...a, subTasks: newSubTasks })
+                        }
+                        return a
+                      })
+                    }
+                  : m
+              )
+            }
+          : y
+      )
+    }))
+  },
+
+  updateSubTask: (yearId, moduleId, assignmentId, subTaskId, patch) => {
+    set((state: Store) => ({
+      years: state.years.map((y) =>
+        y.id === yearId
+          ? {
+              ...y,
+              modules: y.modules.map((m) =>
+                m.id === moduleId
+                  ? {
+                      ...m,
+                      assignments: m.assignments.map((a) => {
+                        if (a.id === assignmentId && a.subTasks) {
+                          const newSubTasks = a.subTasks.map((t) => (t.id === subTaskId ? { ...t, ...patch, weight: patch.weight !== undefined ? clampPercent(patch.weight) : t.weight } : t))
+                          return recalculateAssignment({ ...a, subTasks: newSubTasks })
+                        }
+                        return a
+                      })
+                    }
+                  : m
+              )
+            }
+          : y
+      )
+    }))
+  },
+
+  removeSubTask: (yearId, moduleId, assignmentId, subTaskId) => {
+    set((state: Store) => ({
+      years: state.years.map((y) =>
+        y.id === yearId
+          ? {
+              ...y,
+              modules: y.modules.map((m) =>
+                m.id === moduleId
+                  ? {
+                      ...m,
+                      assignments: m.assignments.map((a) => {
+                        if (a.id === assignmentId && a.subTasks) {
+                          const newSubTasks = a.subTasks.filter((t) => t.id !== subTaskId)
+                          return recalculateAssignment({ ...a, subTasks: newSubTasks })
+                        }
+                        return a
+                      })
+                    }
+                  : m
+              )
+            }
+          : y
+      )
+    }))
+  },
+
   setDesiredGrade: (grade) => set(() => ({ desiredGrade: grade })),
 
 
@@ -305,14 +414,22 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     const y = get().years.find((y) => y.id === yearId)
     const m = y?.modules.find((m) => m.id === moduleId)
     if (!m) return undefined
-    // Weighted sum of completed assignments; incomplete assignments contribute 0
-    const total = m.assignments.reduce((acc, a) => {
+    
+    let totalWeight = 0
+    let totalScore = 0
+
+    m.assignments.forEach((a) => {
       if (a.done && typeof a.score === "number") {
-        return acc + a.score * (a.weight / 100)
+        totalWeight += a.weight
+        totalScore += a.score * (a.weight / 100)
       }
-      return acc
-    }, 0)
-    return Number(total.toFixed(2))
+    })
+
+    if (totalWeight === 0) return undefined
+    
+    // Normalize to 0-100 scale based on completed weight
+    const average = (totalScore / (totalWeight / 100))
+    return Number(average.toFixed(2))
   },
 
   getModuleCompletionPercent: (yearId, moduleId) => {

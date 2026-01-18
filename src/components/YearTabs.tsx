@@ -52,7 +52,7 @@ export default function YearTabs() {
               + Add Year
             </Button>
             {activeYearId && (
-              <Button size="icon" variant="neutral" className="h-9 w-9 bg-chart-4" onClick={() => removeYear(activeYearId)} title="Remove active year">
+              <Button size="icon" variant="neutral" className="h-9 w-9 bg-destructive" onClick={() => removeYear(activeYearId)} title="Remove active year">
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}

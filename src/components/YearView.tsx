@@ -35,7 +35,7 @@ export default function YearView() {
           <div className="ml-auto flex items-center gap-3">
             <label className="text-sm text-muted-foreground flex items-center gap-2">
               <span>Weight (%)</span>
-              <Input className="w-24 bg-white" type="number" step="0.1" min={0} max={100} value={String(Number((year.weight * 100).toFixed(1)))} onChange={(e) => { const val = Number(e.target.value); if (!Number.isNaN(val)) useGradeStore.getState().updateYear(year.id, { weight: val / 100 }) }} />
+              <Input className="w-24 bg-secondary-background" type="number" step="0.1" min={0} max={100} value={String(Number((year.weight * 100).toFixed(1)))} onChange={(e) => { const val = Number(e.target.value); if (!Number.isNaN(val)) useGradeStore.getState().updateYear(year.id, { weight: val / 100 }) }} />
             </label>
 
             <div className="text-sm text-muted-foreground">Credits total: <strong>{year.modules.reduce((s, m) => s + m.credits, 0)}</strong></div>
@@ -46,13 +46,13 @@ export default function YearView() {
         <div className="mt-3">
           <div>
             <MultiProgress segments={[
-              { value: yearSegments.completed, color: "var(--chart-1)", title: `Completed ${yearSegments.completed}%` },
+              { value: yearSegments.completed, color: "var(--chart-1)", title: `Achieved ${yearSegments.completed}%` },
               { value: yearSegments.missed, color: "var(--chart-4)", title: `Missed ${yearSegments.missed}%` },
               { value: yearSegments.remaining, color: "var(--secondary-background)", title: `Remaining ${yearSegments.remaining}%` }
             ]} />
 
             <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
-              <div title={`Completed ${yearSegments.completed}%`}><strong>Done</strong> {yearSegments.completed}%</div>
+              <div title={`Completed ${yearSegments.completed}%`}><strong>Achieved</strong> {yearSegments.completed}%</div>
               <div title={`Missed ${yearSegments.missed}%`}><strong>Missed</strong> {yearSegments.missed}%</div>
               <div title={`Remaining ${yearSegments.remaining}%`}><strong>Remaining</strong> {yearSegments.remaining}%</div>
             </div>
@@ -94,13 +94,13 @@ function AddModuleForm({ yearId, addModule }: { yearId: string; addModule: (year
   }
 
   return (
-    <div className="border-2 border-dashed border-border rounded-base p-4 bg-white/50 hover:bg-white transition-colors">
+    <div className="border-2 border-dashed border-border rounded-base p-4 bg-secondary-background/50 hover:bg-secondary-background transition-colors">
       <h3 className="text-sm font-bold uppercase mb-2 text-muted-foreground">Add New Module</h3>
       <form onSubmit={submit} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-        <Input placeholder="Code (CS101)" value={code} onChange={(e) => setCode(e.target.value)} className="w-full sm:w-36 bg-white" />
-        <Input placeholder="Module name" value={name} onChange={(e) => setName(e.target.value)} className="flex-1 w-full bg-white" />
+        <Input placeholder="Code (CS101)" value={code} onChange={(e) => setCode(e.target.value)} className="w-full sm:w-36 bg-secondary-background" />
+        <Input placeholder="Module name" value={name} onChange={(e) => setName(e.target.value)} className="flex-1 w-full bg-secondary-background" />
         <div className="flex gap-2 w-full sm:w-auto">
-          <Input className="w-24 bg-white" type="number" placeholder="Credits" value={String(credits)} onChange={(e) => setCredits(Number(e.target.value))} />
+          <Input className="w-24 bg-secondary-background" type="number" placeholder="Credits" value={String(credits)} onChange={(e) => setCredits(Number(e.target.value))} />
           <Button type="submit" className="flex-1 sm:flex-none">Add</Button>
         </div>
       </form>
