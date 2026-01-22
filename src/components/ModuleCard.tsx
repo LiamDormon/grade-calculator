@@ -6,9 +6,20 @@ import { Input } from "./ui/input"
 import { Button } from "./ui/button"
 import MultiProgress from "./ui/multiProgress"
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card"
-import { Trash2, Plus, Pencil, Check } from "lucide-react"
+import { Trash2, Plus, Pencil, Check, GripVertical } from "lucide-react"
+import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 
-export default function ModuleCard({ yearId, module }: { yearId: string; module: ModType }) {
+export default function ModuleCard({ 
+  yearId, 
+  module,
+  dragAttributes,
+  dragListeners
+}: { 
+  yearId: string; 
+  module: ModType;
+  dragAttributes?: DraggableAttributes;
+  dragListeners?: DraggableSyntheticListeners;
+}) {
   const addAssignment = useGradeStore((s) => s.addAssignment)
   const removeModule = useGradeStore((s) => s.removeModule)
   const updateModule = useGradeStore((s) => s.updateModule)
@@ -36,7 +47,17 @@ export default function ModuleCard({ yearId, module }: { yearId: string; module:
   return (
     <Card className="mb-4">
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start">
+          {dragAttributes && dragListeners && (
+            <div 
+              className="mr-3 mt-1 text-muted-foreground hover:text-foreground cursor-grab touch-none"
+              {...dragAttributes} 
+              {...dragListeners}
+            >
+              <GripVertical size={20} />
+            </div>
+          )}
+          <div className="flex-1 flex items-start justify-between">
           {isEditingHeader ? (
              <div className="flex flex-col gap-2 w-full max-w-md mr-4">
                <div className="flex gap-2">
@@ -79,6 +100,7 @@ export default function ModuleCard({ yearId, module }: { yearId: string; module:
             </Button>
           </div>
         </div>
+      </div>
 
         <div className="py-2">
           <div className="mt-3">

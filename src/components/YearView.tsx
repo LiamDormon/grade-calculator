@@ -4,12 +4,68 @@ import ModuleCard from "./ModuleCard"
 import { Input } from "./ui/input"
 import { Button } from "./ui/button"
 import MultiProgress from "./ui/multiProgress"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { Module } from "../lib/types";
+
+function SortableModuleCard({ id, module, yearId }: { id: string, module: Module, yearId: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.9 : 1,
+    position: 'relative' as const,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? "shadow-2xl scale-[1.02] rounded-base" : ""}>
+       <ModuleCard 
+         yearId={yearId} 
+         module={module} 
+         dragAttributes={attributes}
+         dragListeners={listeners}
+       />
+    </div>
+  );
+}
+
 
 export default function YearView() {
   const years = useGradeStore((s) => s.years)
   const activeYearId = useGradeStore((s) => s.activeYearId)
   const setActiveYear = useGradeStore((s) => s.setActiveYear)
   const addModule = useGradeStore((s) => s.addModule)
+  const reorderModules = useGradeStore((s) => s.reorderModules)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (!activeYearId && years[0]) setActiveYear(years[0].id)
@@ -23,6 +79,14 @@ export default function YearView() {
 
   const anyInvalid = year.modules.some((m) => !useGradeStore.getState().isModuleAssignmentsValid(year.id, m.id))
   const yearSegments = getYearSegments(year.id)
+
+  function handleDragEnd(event: DragEndEvent) {
+    const {active, over} = event;
+    
+    if (over && active.id !== over.id) {
+       reorderModules(year.id, active.id as string, over.id as string);
+    }
+  }
 
   return (
     <div>
@@ -60,15 +124,26 @@ export default function YearView() {
         {anyInvalid && <div className="text-red-600 font-bold mt-2">Some modules have assignment weights that do not sum to 100%</div>}
       </div>
 
-      <div className="space-y-4">
-        {year.modules.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No modules yet — add one below</div>
-        ) : (
-          year.modules.map((m) => (
-            <ModuleCard key={m.id} yearId={year.id} module={m} />
-          ))
-        )}
-      </div>
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext 
+          items={year.modules.map(m => m.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-4">
+            {year.modules.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No modules yet — add one below</div>
+            ) : (
+              year.modules.map((m) => (
+                <SortableModuleCard key={m.id} id={m.id} yearId={year.id} module={m} />
+              ))
+            )}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       <div className="mt-4">
         <AddModuleForm yearId={year.id} addModule={addModule} />

@@ -116,6 +116,7 @@ export type Actions = {
   addModule: (yearId: string, module: Partial<Module>) => string
   updateModule: (yearId: string, moduleId: string, patch: Partial<Module>) => void
   removeModule: (yearId: string, moduleId: string) => void
+  reorderModules: (yearId: string, activeId: string, overId: string) => void
 
   // Assignments
   addAssignment: (
@@ -206,6 +207,28 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     set((state: Store) => ({
       years: state.years.map((y) => (y.id === yearId ? { ...y, modules: y.modules.filter((m) => m.id !== moduleId) } : y))
     }))
+  },
+
+  reorderModules: (yearId, activeId, overId) => {
+    set((state: Store) => {
+      const yearIndex = state.years.findIndex((y) => y.id === yearId)
+      if (yearIndex === -1) return state
+
+      const year = state.years[yearIndex]
+      const oldIndex = year.modules.findIndex((m) => m.id === activeId)
+      const newIndex = year.modules.findIndex((m) => m.id === overId)
+
+      if (oldIndex === -1 || newIndex === -1) return state
+
+      const newModules = [...year.modules]
+      const [movedModule] = newModules.splice(oldIndex, 1)
+      newModules.splice(newIndex, 0, movedModule)
+
+      const newYears = [...state.years]
+      newYears[yearIndex] = { ...year, modules: newModules }
+
+      return { years: newYears }
+    })
   },
 
   addAssignment: (yearId, moduleId, assignment) => {
