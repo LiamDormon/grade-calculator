@@ -6,7 +6,7 @@ import { Input } from "./ui/input"
 import { Button } from "./ui/button"
 import MultiProgress from "./ui/multiProgress"
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card"
-import { Trash2, Plus, Pencil, Check, GripVertical } from "lucide-react"
+import { Trash2, Plus, Pencil, Check, GripVertical, ChevronDown, ChevronUp } from "lucide-react"
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 
 export default function ModuleCard({ 
@@ -29,6 +29,7 @@ export default function ModuleCard({
   const [aWeight, setAWeight] = useState(0)
   const [aScore, setAScore] = useState<number | undefined>(undefined)
   const [isEditingHeader, setIsEditingHeader] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const getModuleSegments = useGradeStore((s) => s.getModuleSegments)
   const getRequiredModuleScoreForFinal = useGradeStore((s) => s.getRequiredModuleScoreForFinal)
@@ -92,7 +93,10 @@ export default function ModuleCard({
           )}
 
           <div className="flex items-center gap-2">
-            <Button size="icon" variant="neutral" className="h-8 w-8 p-0" aria-label="Edit module" title="Edit module details" onClick={() => setIsEditingHeader(!isEditingHeader)}>
+            <Button size="icon" variant="neutral" className="h-8 w-8 p-0" aria-label={isCollapsed ? "Expand module" : "Collapse module"} title={isCollapsed ? "Expand" : "Collapse"} onClick={() => setIsCollapsed(!isCollapsed)}>
+              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </Button>
+            <Button size="icon" variant="default" className="h-8 w-8 p-0" aria-label="Edit module" title="Edit module details" onClick={() => setIsEditingHeader(!isEditingHeader)}>
               {isEditingHeader ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
             </Button>
             <Button size="icon" variant="neutral" className="h-8 w-8 p-0 bg-destructive" aria-label="Remove module" title="Remove module" onClick={() => removeModule(yearId, module.id)}>
@@ -133,6 +137,8 @@ export default function ModuleCard({
         </div>
       </CardHeader>
 
+      {!isCollapsed && (
+        <>
       <CardContent>
         {module.assignments.map((a, i) => (
           <AssignmentRow key={a.id} yearId={yearId} moduleId={module.id} assignment={a} showLabels={i === 0} />
@@ -181,6 +187,8 @@ export default function ModuleCard({
           </div>
         )}
       </CardFooter>
+      </>
+      )}
     </Card>
   )
 }
