@@ -9,6 +9,7 @@ import { useRef, useState, useEffect } from "react"
 
 export default function Summary() {
   const final = useGradeStore((s) => s.getFinalGrade())
+  const achieved = useGradeStore((s) => s.getFinalAchievedGrade())
   const years = useGradeStore((s) => s.years)
   const anyInvalidModule = years.some((y) => y.modules.some((m) => !useGradeStore.getState().isModuleAssignmentsValid(y.id, m.id)))
   const totalYearWeight = years.reduce((s, y) => s + y.weight, 0)
@@ -108,10 +109,38 @@ export default function Summary() {
           <div className="font-heading text-lg">Final grade</div>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-heading mb-1">{final ?? "—"}</div>
-          <div className="text-sm text-muted-foreground mb-4">Classification: <strong>{classify(final)}</strong></div>
+          <div className="space-y-4 mb-6">
+            
+            {/* Primary Card */}
+            <div className="relative p-5 border-2 border-border rounded-base bg-main text-main-foreground shadow-shadow">
+               <div className="flex flex-col gap-1">
+                 <h3 className="text-xs font-bold uppercase tracking-widest opacity-80">On Track</h3>
+                 <div className="flex items-baseline gap-3">
+                   <span className="text-5xl font-heading font-black">{final ?? "—"}</span>
+                   <span className="text-2xl font-bold opacity-90">{classify(final)}</span>
+                 </div>
+                 <p className="text-xs font-medium mt-2 opacity-80">
+                    Projected final grade
+                 </p>
+               </div>
+            </div>
 
-          <div className="mb-4 space-y-2">
+            {/* Secondary Card */}
+            <div className="flex items-center justify-between p-5 border-2 border-border rounded-base bg-secondary-background">
+               <div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Achieved</h4>
+                  <span className="text-3xl font-heading font-black text-foreground">{achieved ?? 0}</span>
+               </div>
+               
+               <div className="text-right">
+                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Class</h4>
+                   <span className="text-xl font-bold text-foreground">{classify(achieved)}</span>
+               </div>
+            </div>
+
+          </div>
+
+          <div className="mb-4 space-y-2 border-t pt-4">
             <div className="text-sm text-muted-foreground font-semibold">Desired final grade</div>
             <Select onValueChange={(v) => setDesired(v ? Number(v) : undefined)}>
               <SelectTrigger className="w-full bg-secondary-background text-foreground">
@@ -127,7 +156,7 @@ export default function Summary() {
           </div>
 
           <div className="text-sm text-muted-foreground mt-2">
-            Choose a desired grade to see targets for incomplete modules
+            Choose a desired grade to set targets for incomplete modules
           </div>
 
           {anyInvalidModule && <div className="warn mt-4 text-red-600 font-bold">Some modules have assignment weights that do not sum to 100%</div>}

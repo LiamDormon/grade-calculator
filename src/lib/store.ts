@@ -147,7 +147,9 @@ export type Actions = {
   getModuleSegments: (yearId: string, moduleId: string) => { completed: number; missed: number; remaining: number }
   getYearSegments: (yearId: string) => { completed: number; missed: number; remaining: number }
   getYearAverage: (yearId: string) => number | undefined
+  getYearAchievedAverage: (yearId: string) => number | undefined
   getFinalGrade: () => number | undefined
+  getFinalAchievedGrade: () => number | undefined
 
   // desired final grade helpers
   setDesiredGrade: (grade?: number) => void
@@ -521,6 +523,22 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     return Number(weighted.toFixed(2))
   },
 
+  getYearAchievedAverage: (yearId) => {
+    const y = get().years.find((y) => y.id === yearId)
+    if (!y) return undefined
+    const totalCredits = y.modules.reduce((s, m) => s + m.credits, 0)
+    if (totalCredits === 0) return 0
+    
+    // Sum of (moduleAchieved * credits)
+    const weightedSum = y.modules.reduce((s, m) => {
+       const modScore = get().getModuleAchievedScore(yearId, m.id) ?? 0
+       return s + (modScore * m.credits)
+    }, 0)
+    
+    // Average over total credits (including empty modules)
+    return Number((weightedSum / totalCredits).toFixed(2))
+  },
+
   getYearSegments: (yearId: string) => {
     const state = get()
     const y = state.years.find((yy) => yy.id === yearId)
@@ -548,6 +566,21 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
       missed: Number((missedCredits * scale).toFixed(1)),
       remaining: Number((remainingCredits * scale).toFixed(1))
     }
+  },
+
+  getFinalAchievedGrade: () => {
+    const state = get()
+    // Calculate for all years, treating undefined as 0 if the year exists
+    const totalWeight = state.years.reduce((s, y) => s + y.weight, 0)
+    if (totalWeight === 0) return 0
+    
+    const weightedSum = state.years.reduce((s, y) => {
+       const yearScore = state.getYearAchievedAverage(y.id) ?? 0
+       return s + (yearScore * y.weight)
+    }, 0)
+    
+    // Normalize by total weight defined in system (should be 1 usually, but normalize to be safe if > 0)
+    return Number((weightedSum / totalWeight).toFixed(2))
   },
 
   getFinalGrade: () => {
