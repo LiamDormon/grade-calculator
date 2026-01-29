@@ -366,43 +366,69 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     if (!module) return undefined
 
     const remainderWeight = module.assignments.reduce((s, a) => s + (a.done ? 0 : a.weight), 0)
-    if (remainderWeight <= 0) return undefined
+    if (remainderWeight <= 0.001) return undefined
 
-    const completedContrib = module.assignments.reduce((s, a) => s + ((a.score ?? 0) * (a.weight / 100) * (a.done ? 1 : 0)), 0)
+    // Global calculation: Find x such that if ALL incomplete assignments (in all modules) get x, we hit desired.
+    function calculateFinalGradeWithRemainingX(x: number): number {
+      const yearValues = state.years.map((y) => {
+         const moduleValues = y.modules.map((m) => {
+            let totalWeight = 0
+            let totalScore = 0
+            m.assignments.forEach((a) => {
+               totalWeight += a.weight
+               if (a.done) {
+                  if (typeof a.score === "number") {
+                     totalScore += a.score * (a.weight / 100)
+                  }
+               } else {
+                  // Not done: use x for remaining parts
+                  let effectiveX = x
+                  if (a.subTasks && a.subTasks.length > 0) {
+                     const stW = a.subTasks.reduce((s, t) => s + t.weight, 0)
+                     if (stW > 0) {
+                        const scoreSum = a.subTasks.reduce((acc, t) => {
+                           const val = (t.done && typeof t.score === "number") ? t.score : x
+                           return acc + val * (t.weight / 100) 
+                        }, 0)
+                        effectiveX = scoreSum / (stW / 100)
+                     }
+                  }
+                  totalScore += effectiveX * (a.weight / 100)
+               }
+            })
+            
+            if (totalWeight <= 0.001) return undefined
+            const avg = totalScore / (totalWeight / 100)
+            return { avg, credits: m.credits }
+         })
+         
+         const validModules = moduleValues.filter((v): v is { avg: number; credits: number } => v !== undefined)
+         const totalCredits = validModules.reduce((s, m) => s + m.credits, 0)
+         if (totalCredits === 0) return undefined
+         
+         const yearAvg = validModules.reduce((s, m) => s + m.avg * m.credits, 0) / totalCredits
+         return { avg: yearAvg, weight: y.weight }
+      })
 
-    const yearLocal = year
-
-    function finalIfX(x: number) {
-      // compute module avg if remaining assignments avg = x
-      const moduleAvg = completedContrib + (x * (remainderWeight / 100))
-      const yearIdLocal = yearLocal.id
-      // year average
-      const modulesWithAvg = yearLocal.modules.map((m) => ({ avg: m.id === moduleId ? moduleAvg : state.getModuleAverage(yearIdLocal, m.id), credits: m.credits }))
-      const validMods = modulesWithAvg.filter((m) => m.avg !== undefined)
-      const totalCredits = validMods.reduce((s, m) => s + m.credits, 0)
-      if (totalCredits === 0) return undefined
-      const yearAvg = validMods.reduce((s, m) => s + (m.avg! * m.credits), 0) / totalCredits
-      // final grade using other years unchanged
-      const yearsWithAvg = state.years.map((y) => ({ avg: y.id === yearIdLocal ? yearAvg : state.getYearAverage(y.id), weight: y.weight }))
-      const validYears = yearsWithAvg.filter((y) => y.avg !== undefined)
+      const validYears = yearValues.filter((v): v is { avg: number; weight: number } => v !== undefined)
       const totalWeight = validYears.reduce((s, y) => s + y.weight, 0)
-      if (totalWeight === 0) return undefined
-      const normalized = validYears.map((y) => ({ avg: y.avg!, weight: y.weight / totalWeight }))
-      return normalized.reduce((s, y) => s + y.avg * y.weight, 0)
+      if (totalWeight === 0) return 0
+      
+      return validYears.reduce((s, y) => s + y.avg * (y.weight / totalWeight), 0)
     }
 
-    // binary search for minimal x in [0,100]
-    let lo = 0
-    let hi = 100
-    const target = desired
-    if ((finalIfX(100) ?? 0) < target) return undefined
-    for (let i=0;i<20;i++){
-      const mid = (lo+hi)/2
-      const f = finalIfX(mid)!
-      if (f >= target) hi = mid
-      else lo = mid
-    }
-    return Number(hi.toFixed(1))
+    // Check bounds
+    const maxGrade = calculateFinalGradeWithRemainingX(100)
+    if (maxGrade < desired) return undefined
+
+    const currentGrade = calculateFinalGradeWithRemainingX(0)
+    if (currentGrade >= desired) return 0
+
+    if (maxGrade - currentGrade < 0.0001) return undefined
+    
+    // Linear interpolation
+    const req = 100 * (desired - currentGrade) / (maxGrade - currentGrade)
+    return Number(req.toFixed(1))
   },
 
   // per-assignment required targets: returns required average for each remaining assignment (same for all) and
