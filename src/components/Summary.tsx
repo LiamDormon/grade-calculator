@@ -1,14 +1,20 @@
 import { useGradeStore } from "../lib/store"
-import type { GradeSnapshot } from "../lib/types"
+import type { DegreeClass, GradeSnapshot } from "../lib/types"
 import { Card, CardHeader, CardContent, CardTitle } from "./ui/card"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select"
 import { Button } from "./ui/button"
 import { Download, Upload, ChevronDown } from "lucide-react"
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useMemo } from "react"
 
 
-export default function Summary() {
-  const final = useGradeStore((s) => s.getFinalGrade())
+type SummaryProps = {
+  mode?: "new" | "old"
+}
+
+export default function Summary({ mode = "new" }: SummaryProps) {
+  // for the "old" calculation route we simply fall back to the achieved grade
+  // but this could be replaced with any alternate algorithm in future
+  const final = useGradeStore((s) => (mode === "new" ? s.getFinalGrade() : s.getFinalAchievedGrade()))
   const achieved = useGradeStore((s) => s.getFinalAchievedGrade())
   const years = useGradeStore((s) => s.years)
   const anyInvalidModule = years.some((y) => y.modules.some((m) => !useGradeStore.getState().isModuleAssignmentsValid(y.id, m.id)))
@@ -22,6 +28,26 @@ export default function Summary() {
     if (n >= 40) return "Third"
     return "Fail"
   }
+
+  const classColors: Record<DegreeClass, string> = {
+    First: "text-chart-2",
+    "2:1": "text-chart-5",
+    "2:2": "text-chart-4",
+    Third: "text-chart-1",
+    Fail: "text-destructive",
+  }
+
+  function borderlineName(prelim2Class: DegreeClass): string {
+    const ranks: DegreeClass[] = ["Fail", "Third", "2:2", "2:1", "First"]
+    const idx = ranks.indexOf(prelim2Class)
+    return idx < ranks.length - 1 ? `Borderline ${ranks[idx + 1]}` : `Borderline above ${prelim2Class}`
+  }
+
+  const oldResult = useMemo(
+    () => mode === "old" ? useGradeStore.getState().getOldClassification() : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [years, mode]
+  )
 
   const setDesired = useGradeStore((s) => s.setDesiredGrade)
   const importState = useGradeStore((s) => s.importState)
@@ -106,9 +132,92 @@ export default function Summary() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="font-heading text-lg">Final grade</div>
+          <div className="font-heading text-lg">Final Classification</div>
         </CardHeader>
         <CardContent>
+          {mode === "old" ? (
+            <div className="space-y-4">
+              {!oldResult ? (
+                <p className="text-sm text-muted-foreground">Add modules to Years 2 and 3 with grades to see your classification.</p>
+              ) : (
+                <>
+                  {/* Stage 1 */}
+                  <div className="p-3 border-2 border-border rounded-base bg-secondary-background space-y-1">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stage 1 - Grade Profile</h3>
+                    <p className="text-sm font-medium">
+                      <span className="font-black text-foreground">{oldResult.gradeProfile.length}</span> weighted grades
+                      <span className="text-muted-foreground"> (base unit: {oldResult.baseUnit} credits)</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">Year 1 excluded · Level 3 counted twice</p>
+                  </div>
+
+                  {/* Stage 2 */}
+                  <div className="p-3 border-2 border-border rounded-base bg-secondary-background space-y-1">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stage 2 - Weighted Average</h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-heading font-black">{oldResult.weightedAverage}</span>
+                      <span className={`text-lg font-bold ${classColors[oldResult.prelim1Class]}`}>
+                        {oldResult.prelim1Class}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Preliminary classification 1</p>
+                  </div>
+
+                  {/* Stage 3 */}
+                  <div className="p-3 border-2 border-border rounded-base bg-secondary-background space-y-1">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stage 3 - Distribution</h3>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground text-xs">#{oldResult.midRank} grade</span>
+                        <div className="font-black text-lg">{oldResult.midGrade}</div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">#{oldResult.checkRank} grade</span>
+                        <div className="font-black text-lg">{oldResult.checkGrade}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className={`text-lg font-bold ${classColors[oldResult.prelim2Class]}`}>
+                        {oldResult.prelim2IsBorderline ? borderlineName(oldResult.prelim2Class) : oldResult.prelim2Class}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Preliminary classification 2</p>
+                  </div>
+
+                  {/* Stage 4 */}
+                  <div className={`relative p-5 border-2 border-border rounded-base shadow-shadow ${oldResult.needsExamBoard ? "bg-secondary-background" : "bg-main text-main-foreground"}`}>
+                    <h3 className="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">Stage 4 - Final Classification</h3>
+                    {oldResult.needsExamBoard ? (
+                      <div className="space-y-2">
+                        <p className="text-sm font-bold text-amber-600">Referred to Exam Board</p>
+                        {oldResult.examBoardGrade !== undefined && (
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-heading font-black">{oldResult.examBoardGrade}</span>
+                            <span className={`text-xl font-bold ${classColors[oldResult.examBoardRecommendation!]}`}>
+                              {oldResult.examBoardRecommendation}
+                            </span>
+                          </div>
+                        )}
+                        <p className="text-xs opacity-70">Preliminary classifications disagree, final class to be decided by the exam board. Recommendation based on final year average.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-5xl font-heading font-black">{oldResult.finalClass}</span>
+                        </div>
+                        <p className="text-xs font-medium mt-2 opacity-80">
+                          {oldResult.prelim2IsBorderline
+                            ? "Preliminary classification 1 falls within the borderline range of classification 2"
+                            : "Both preliminary classifications agree"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              {anyInvalidModule && <div className="warn text-red-600 font-bold text-sm">Some modules have assignment weights that do not sum to 100%</div>}
+            </div>
+          ) : (
           <div className="space-y-4 mb-6">
             
             {/* Primary Card */}
@@ -139,7 +248,10 @@ export default function Summary() {
             </div>
 
           </div>
+          )}
 
+          {mode === "new" && (
+          <>
           <div className="mb-4 space-y-2 border-t pt-4">
             <div className="text-sm text-muted-foreground font-semibold">Desired final grade</div>
             <Select onValueChange={(v) => setDesired(v ? Number(v) : undefined)}>
@@ -160,7 +272,9 @@ export default function Summary() {
           </div>
 
           {anyInvalidModule && <div className="warn mt-4 text-red-600 font-bold">Some modules have assignment weights that do not sum to 100%</div>}
-          {Math.abs(totalYearWeight - 1) > 0.001 && <div className="warn mt-2 text-amber-600 font-bold">Year weights do not sum to 1. They will be normalized when computing final grade.</div>}
+          {Math.abs(totalYearWeight - 1) > 0.001 && <div className="warn mt-2 text-amber-600 font-bold">Year weights do not sum to 1. They will be normalised when computing final grade.</div>}
+          </>
+          )}
         </CardContent>
       </Card>
 

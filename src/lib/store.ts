@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid"
 import { create } from "zustand"
-import type { Assignment, GradeSnapshot, Module, Year, SubTask } from "./types"
+import type { Assignment, DegreeClass, GradeSnapshot, Module, OldClassificationResult, Year, SubTask } from "./types"
 
 function sum(arr: number[]) {
   return arr.reduce((s, v) => s + v, 0)
@@ -8,6 +8,28 @@ function sum(arr: number[]) {
 
 function clampPercent(n: number) {
   return Math.max(0, Math.min(100, n))
+}
+
+// ── Old-style degree classification helpers ───────────────────────────────────
+
+const CLASS_RANKS: Record<DegreeClass, number> = { First: 4, "2:1": 3, "2:2": 2, Third: 1, Fail: 0 }
+
+// Table 1: used for the weighted average (Stage 2)
+function classifyTable1(n: number): DegreeClass {
+  if (n >= 68) return "First"
+  if (n >= 59.5) return "2:1"
+  if (n >= 49.5) return "2:2"
+  if (n >= 39.5) return "Third"
+  return "Fail"
+}
+
+// Table 2: used for individual ranked grades (Stage 3) and exam-board average
+function classifyTable2(n: number): DegreeClass {
+  if (n >= 69.5) return "First"
+  if (n >= 59.5) return "2:1"
+  if (n >= 49.5) return "2:2"
+  if (n >= 39.5) return "Third"
+  return "Fail"
 }
 
 function recalculateAssignment(a: Assignment): Assignment {
@@ -150,6 +172,9 @@ export type Actions = {
   getYearAchievedAverage: (yearId: string) => number | undefined
   getFinalGrade: () => number | undefined
   getFinalAchievedGrade: () => number | undefined
+
+  // old-style 4-stage classification
+  getOldClassification: () => OldClassificationResult | null
 
   // desired final grade helpers
   setDesiredGrade: (grade?: number) => void
@@ -619,6 +644,131 @@ export const useGradeStore = create<GradeSnapshot & Actions>()((set: (updater: (
     const normalized = valid.map((y) => ({ avg: y.avg!, weight: y.weight / totalWeight }))
     const final = normalized.reduce((s, y) => s + y.avg * y.weight, 0)
     return Number(final.toFixed(2))
+  },
+
+  getOldClassification: (): OldClassificationResult | null => {
+    const state = get()
+    const years = state.years
+
+    // Year 1 (index 0) does not count
+    const countingYears = years.slice(1)
+    if (countingYears.length === 0) return null
+
+    // Determine base unit: 5 if any module has credits that are a multiple of 5 but not 10
+    const allModules = countingYears.flatMap((y) => y.modules)
+    const hasBase5 = allModules.some((m) => m.credits % 10 !== 0 && m.credits % 5 === 0)
+    const baseUnit = hasBase5 ? 5 : 10
+
+    // Level 2 = all counting years except the last; Level 3 = the last counting year
+    const level2Years = countingYears.slice(0, -1)
+    const level3Year = countingYears[countingYears.length - 1]
+
+    // Build grade profile
+    const gradeProfile: number[] = []
+
+    for (const year of level2Years) {
+      for (const module of year.modules) {
+        const grade = state.getModuleAverage(year.id, module.id)
+        if (grade === undefined) continue
+        const elements = Math.round(module.credits / baseUnit) // e.g. 20-credit → 2 elements of 10
+        for (let i = 0; i < elements; i++) gradeProfile.push(grade)
+      }
+    }
+
+    for (const module of level3Year.modules) {
+      const grade = state.getModuleAverage(level3Year.id, module.id)
+      if (grade === undefined) continue
+      // Level 3 modules are counted twice (weighted 2×)
+      const elements = Math.round(module.credits / baseUnit) * 2
+      for (let i = 0; i < elements; i++) gradeProfile.push(grade)
+    }
+
+    if (gradeProfile.length === 0) return null
+
+    const n = gradeProfile.length
+
+    // ── Stage 2: Weighted average → Preliminary Classification 1 ─────────────
+    const weightedAverage = Number((gradeProfile.reduce((s, g) => s + g, 0) / n).toFixed(2))
+    const prelim1Class = classifyTable1(weightedAverage)
+
+    // ── Stage 3: Distribution → Preliminary Classification 2 ─────────────────
+    // Rank grades highest → lowest
+    const sorted = [...gradeProfile].sort((a, b) => b - a)
+
+    // mid = n/2 (1-based); check = n/2 - n/12 (1-based)
+    const midRank = Math.floor(n / 2)
+    const checkRank = midRank - Math.floor(n / 12)
+    const midGrade = sorted[midRank - 1]     // convert to 0-based index
+    const checkGrade = sorted[checkRank - 1]
+
+    const midClass = classifyTable2(midGrade)
+    const checkClass = classifyTable2(checkGrade)
+    const prelim2IsBorderline = CLASS_RANKS[checkClass] > CLASS_RANKS[midClass]
+    const prelim2Class = midClass
+
+    // ── Stage 4: Determine final classification ────────────────────────────────
+    const r1 = CLASS_RANKS[prelim1Class]
+    const r2 = CLASS_RANKS[prelim2Class]
+
+    let scenario: 1 | 2 | 3
+    let finalClass: DegreeClass | null = null
+    let needsExamBoard = false
+
+    if (!prelim2IsBorderline) {
+      if (r1 === r2) {
+        scenario = 1
+        finalClass = prelim1Class
+      } else {
+        scenario = 3
+        needsExamBoard = true
+      }
+    } else {
+      // prelim2 is borderline upward: range covers r2 and r2+1
+      const r2High = r2 + 1
+      if (r1 === r2 || r1 === r2High) {
+        // Scenario 2: prelim1 class sits within the borderline range → award prelim1
+        scenario = 2
+        finalClass = prelim1Class
+      } else {
+        scenario = 3
+        needsExamBoard = true
+      }
+    }
+
+    // Exam board recommendation: credit-weighted average of the final year, classified via Table 2
+    let examBoardGrade: number | undefined
+    let examBoardRecommendation: DegreeClass | undefined
+    if (needsExamBoard) {
+      const finalYearModules = level3Year.modules.map((m) => ({
+        grade: state.getModuleAverage(level3Year.id, m.id),
+        credits: m.credits,
+      }))
+      const valid = finalYearModules.filter((m) => m.grade !== undefined)
+      if (valid.length > 0) {
+        const totalCredits = valid.reduce((s, m) => s + m.credits, 0)
+        const creditWeightedAvg = valid.reduce((s, m) => s + m.grade! * m.credits, 0) / totalCredits
+        examBoardGrade = Number(creditWeightedAvg.toFixed(2))
+        examBoardRecommendation = classifyTable2(examBoardGrade)
+      }
+    }
+
+    return {
+      gradeProfile,
+      baseUnit,
+      weightedAverage,
+      prelim1Class,
+      midRank,
+      checkRank,
+      midGrade,
+      checkGrade,
+      prelim2Class,
+      prelim2IsBorderline,
+      scenario,
+      finalClass,
+      needsExamBoard,
+      examBoardGrade,
+      examBoardRecommendation,
+    }
   },
 
   importState: (data: GradeSnapshot) => {
